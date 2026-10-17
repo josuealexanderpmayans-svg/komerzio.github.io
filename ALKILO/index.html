@@ -4,62 +4,120 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>ALKILO</title>
+  
+  <!-- TUS ESTILOS -->
   <link rel="stylesheet" href="css/estilos.css" />
+  <link rel="stylesheet" href="css/mapa-choferes.css" />
+  <link rel="stylesheet" href="css/terminal.css" />
+
+  <!-- ESTILO DEL BOTÓN DE GOOGLE -->
+  <style>
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      padding: 14px 18px;
+      margin-top: 18px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      background: #ffffff;
+      border: 1.5px solid #dadce0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: box-shadow .15s, transform .1s, background .15s;
+      font-family: inherit;
+    }
+    .btn-google:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+      background: #f8f9fa;
+    }
+    .btn-google:active { transform: scale(.98); }
+    .btn-google:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-google-icono { flex-shrink: 0; }
+  </style>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
 
   <!-- ============================================================
-       PANTALLA: LOGIN
+       PANTALLA: LOGIN CON GOOGLE
        ============================================================ -->
   <section id="pantalla-login" class="pantalla activa">
     <div class="contenedor">
       <h1 class="logo">ALKILO</h1>
-      <p class="subtitulo">Inicia sesión</p>
+      <p class="subtitulo">Inicia sesión con tu cuenta de Google</p>
 
-      <form id="form-login" class="formulario">
-        <label for="login-email">Correo</label>
-        <input type="email" id="login-email" required placeholder="tucorreo@ejemplo.com" autocomplete="email" />
-
-        <label for="login-password">Contraseña</label>
-        <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password" />
-
-        <button type="submit" class="btn-principal">Entrar</button>
-      </form>
+      <button id="btn-google-login" class="btn-google" type="button">
+        <svg class="btn-google-icono" viewBox="0 0 48 48" width="22" height="22" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        <span>Continuar con Google</span>
+      </button>
 
       <p class="mensaje-error" id="login-error"></p>
 
-      <p class="cambiar-pantalla">
-        ¿No tienes cuenta?
-        <a href="#" id="ir-a-registro">Regístrate</a>
+      <p class="texto-ayuda" style="margin-top:22px;line-height:1.5;text-align:center">
+        Solo aceptamos cuentas de Google.<br>
+        Si no tienes una, puedes crear una gratis.
       </p>
     </div>
   </section>
 
   <!-- ============================================================
-       PANTALLA: REGISTRO
+       PANTALLA: COMPLETAR PERFIL (Registro para usuarios nuevos)
        ============================================================ -->
   <section id="pantalla-registro" class="pantalla">
     <div class="contenedor">
       <h1 class="logo">ALKILO</h1>
-      <p class="subtitulo">Crear cuenta</p>
+      <p class="subtitulo">Completa tu perfil</p>
+
+      <div class="bloqueo-suscripcion" style="margin-bottom:16px; padding: 20px 10px;">
+        <p class="icono-bloqueo" style="margin-bottom: 8px;">👤</p>
+        <p class="texto-bloqueo">
+          Estás autenticado como<br>
+          <strong id="reg-email-google">—</strong>
+        </p>
+      </div>
 
       <form id="form-registro" class="formulario">
         <label for="reg-nombre">Nombre completo</label>
         <input type="text" id="reg-nombre" required placeholder="Juan Pérez" autocomplete="name" />
 
-        <label for="reg-telefono">Teléfono</label>
-        <input type="tel" id="reg-telefono" required placeholder="+58 412 000 0000" autocomplete="tel" />
+        <label for="reg-telefono">Teléfono (Cuba)</label>
+        <div class="input-prefijo">
+          <span class="prefijo">+53</span>
+          <input type="tel" id="reg-telefono" required
+                 inputmode="numeric" maxlength="8" minlength="8"
+                 pattern="[0-9]{8}" placeholder="56940021" autocomplete="tel" />
+        </div>
+        <p class="texto-ayuda" id="reg-telefono-ayuda">8 dígitos, sin el +53</p>
 
-        <label for="reg-email">Correo</label>
-        <input type="email" id="reg-email" required placeholder="tucorreo@ejemplo.com" autocomplete="email" />
+        <label for="reg-provincia">Provincia *</label>
+        <select id="reg-provincia" required>
+          <option value="">— Elige tu provincia —</option>
+        </select>
 
-        <label for="reg-password">Contraseña (mín. 6 caracteres)</label>
-        <input type="password" id="reg-password" required minlength="6" placeholder="••••••••" autocomplete="new-password" />
+        <label for="reg-municipio">Municipio *</label>
+        <select id="reg-municipio" required disabled>
+          <option value="">— Primero elige provincia —</option>
+        </select>
+
+        <label for="reg-codigo-referido">Código de referido (opcional)</label>
+        <input type="text" id="reg-codigo-referido" placeholder="Ej: A1B2-C3D4"
+               maxlength="9" style="text-transform: uppercase" />
+        <p class="texto-ayuda">Si alguien te invitó, escribe su código aquí.</p>
 
         <label for="reg-rol">Quiero registrarme como</label>
         <select id="reg-rol" required>
@@ -67,14 +125,75 @@
           <option value="chofer">Chofer (requiere suscripción)</option>
         </select>
 
-        <button type="submit" class="btn-principal">Crear cuenta</button>
+        <div id="reg-bloque-chofer" class="oculto">
+          <label for="reg-tipo-vehiculo">Tipo de vehículo *</label>
+          <select id="reg-tipo-vehiculo">
+            <option value="">— Elige tu vehículo —</option>
+            <option value="moto">🛵 Moto</option>
+            <option value="motor_electrico">⚡ Motor eléctrico</option>
+            <option value="bicitaxi">🚲 Bicitaxi</option>
+            <option value="triciclo">🛺 Triciclo</option>
+            <option value="auto_ligero">🚗 Auto ligero</option>
+            <option value="camioneta">🚙 Camioneta</option>
+            <option value="camion">🚚 Camión</option>
+            <option value="autobus">🚌 Autobús</option>
+          </select>
+
+          <label for="reg-chapa">Chapa del vehículo (opcional)</label>
+          <input type="text" id="reg-chapa" placeholder="Ej: ABC123" maxlength="20" />
+
+          <p class="texto-ayuda" style="margin-top:8px">
+            📋 Tu cuenta como chofer quedará <strong>pendiente de aprobación</strong> por el administrador.
+          </p>
+        </div>
+
+        <button type="submit" class="btn-principal">Guardar y continuar</button>
       </form>
 
       <p class="mensaje-error" id="registro-error"></p>
+      <p class="mensaje-exito" id="registro-exito"></p>
 
       <p class="cambiar-pantalla">
-        ¿Ya tienes cuenta?
-        <a href="#" id="ir-a-login">Inicia sesión</a>
+        <a href="#" id="ir-a-login">Cancelar (cerrar sesión)</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PANTALLA: COMPLETAR UBICACIÓN
+       ============================================================ -->
+  <section id="pantalla-completar-ubicacion" class="pantalla">
+    <div class="contenedor">
+      <h1 class="logo">ALKILO</h1>
+      <p class="subtitulo">Completa tu ubicación</p>
+
+      <div class="bloqueo-suscripcion">
+        <p class="icono-bloqueo">📍</p>
+        <p class="texto-bloqueo">
+          Necesitamos saber dónde vives para conectarte con servicios de tu zona.
+          Solo lo haces una vez.
+        </p>
+      </div>
+
+      <form id="form-completar-ubicacion" class="formulario" style="margin-top:20px">
+        <label for="cu-provincia">Provincia *</label>
+        <select id="cu-provincia" required>
+          <option value="">— Elige tu provincia —</option>
+        </select>
+
+        <label for="cu-municipio">Municipio *</label>
+        <select id="cu-municipio" required disabled>
+          <option value="">— Primero elige provincia —</option>
+        </select>
+
+        <button type="submit" class="btn-principal">Guardar ubicación</button>
+      </form>
+
+      <p class="mensaje-error" id="cu-error"></p>
+      <p class="mensaje-exito" id="cu-exito"></p>
+
+      <p class="cambiar-pantalla">
+        <a href="#" id="cu-cerrar-sesion">Cerrar sesión</a>
       </p>
     </div>
   </section>
@@ -96,36 +215,93 @@
       </div>
 
       <p id="perfil-rol" class="etiqueta-rol">—</p>
+      <p id="perfil-ubicacion" class="texto-ayuda" style="margin-top:-14px;margin-bottom:18px">—</p>
+
+      <div class="saldo-card" id="perfil-saldo-card">
+        <div class="saldo-card-izq">
+          <span class="saldo-card-emoji">💰</span>
+          <div>
+            <span class="saldo-card-label">Tu saldo</span>
+            <span class="saldo-card-monto" id="perfil-saldo">—</span>
+          </div>
+        </div>
+        <button class="saldo-card-btn" id="btn-recargar-saldo">+ Recargar</button>
+      </div>
 
       <div id="perfil-banner-suscripcion" class="banner-suscripcion oculto"></div>
+      <div id="perfil-banner-advertencias" class="banner-advertencias oculto" style="display:none"></div>
+      <div id="perfil-banner-premium" class="banner-premium oculto" style="display:none"></div>
 
       <div class="acciones-perfil">
         <button id="btn-ir-nueva-solicitud" class="btn-accion" data-rol="cliente">
           🚗 Pedir servicio
+          <span id="badge-mis-activas" class="badge-rojo oculto">0</span>
         </button>
         <button id="btn-ir-mis-solicitudes" class="btn-accion" data-rol="cliente">
           📋 Mis solicitudes
+          <span id="badge-mis-solicitudes" class="badge-rojo oculto">0</span>
         </button>
+        <button id="btn-ir-plan-premium" class="btn-accion" data-rol="cliente">⭐ Plan Premium</button>
+
+        <div id="chm-switch-wrapper" class="chm-switch-card" data-rol="chofer">
+          <div class="chm-switch-info">
+            <span class="chm-switch-titulo">🟢 Estar disponible</span>
+            <span class="chm-switch-sub">Aparecerás en el mapa de clientes</span>
+          </div>
+          <label class="chm-switch">
+            <input type="checkbox" id="chm-switch-disponible" />
+            <span class="chm-slider"></span>
+          </label>
+        </div>
+
         <button id="btn-ir-disponibles" class="btn-accion" data-rol="chofer">
           🔎 Solicitudes disponibles
+          <span id="badge-disponibles" class="badge-rojo oculto">0</span>
         </button>
         <button id="btn-ir-mis-servicios" class="btn-accion" data-rol="chofer">
           🚕 Mis servicios aceptados
+          <span id="badge-servicios-activos" class="badge-rojo oculto">0</span>
         </button>
-        <button id="btn-ir-mi-suscripcion" class="btn-accion" data-rol="chofer">
-          💳 Mi suscripción
+        <button id="btn-ir-mi-suscripcion" class="btn-accion" data-rol="chofer">💳 Mi suscripción</button>
+
+        <button id="btn-ir-terminal" class="btn-accion">
+          🚐 Terminal
+          <span id="badge-terminal" class="badge-rojo oculto">0</span>
         </button>
-        <button id="btn-ir-panel-admin" class="btn-accion btn-admin" data-rol="admin">
-          ⚙️ Panel de administrador
+
+        <button id="btn-ver-choferes-mapa" class="btn-accion">🗺️ Choferes cercanos</button>
+        <button id="btn-ver-mis-referidos" class="btn-accion">🎁 Invitar y ganar</button>
+        <button id="btn-ver-mis-reportes" class="btn-accion">🚨 Mis reportes</button>
+        <button id="btn-ver-mis-advertencias" class="btn-accion">
+          ⚠️ Mis advertencias <span id="badge-advertencias-perfil" class="badge-rojo oculto">0</span>
         </button>
+        <button id="btn-activar-notificaciones" class="btn-accion">
+          🔔 Activar notificaciones
+        </button>
+
+        <button id="btn-ir-panel-admin" class="btn-accion btn-admin" data-rol="admin">⚙️ Panel de administrador</button>
       </div>
 
       <form id="form-perfil" class="formulario">
         <label for="perfil-nombre">Nombre</label>
         <input type="text" id="perfil-nombre" required />
 
-        <label for="perfil-telefono">Teléfono</label>
-        <input type="tel" id="perfil-telefono" required />
+        <label for="perfil-telefono">Teléfono (Cuba)</label>
+        <div class="input-prefijo">
+          <span class="prefijo">+53</span>
+          <input type="tel" id="perfil-telefono" readonly inputmode="numeric" maxlength="8" />
+        </div>
+        <p class="texto-ayuda">Para cambiar tu teléfono, contacta al administrador.</p>
+
+        <label for="perfil-provincia">Provincia</label>
+        <select id="perfil-provincia">
+          <option value="">— Elige tu provincia —</option>
+        </select>
+
+        <label for="perfil-municipio">Municipio</label>
+        <select id="perfil-municipio" disabled>
+          <option value="">— Primero elige provincia —</option>
+        </select>
 
         <label for="perfil-email">Correo (no editable)</label>
         <input type="email" id="perfil-email" disabled />
@@ -147,18 +323,42 @@
       <div class="bloqueo-suscripcion">
         <p class="icono-bloqueo">🔒</p>
         <h2>Sin suscripción activa</h2>
-        <p class="texto-bloqueo">
-          Para ver y aceptar solicitudes necesitas una suscripción de chofer vigente.
-        </p>
-        <p class="texto-bloqueo">
-          Paga desde aquí, envía tu comprobante y el admin te activará el acceso.
-        </p>
-        <button id="btn-pagar-suscripcion" class="btn-principal" style="background:#16a34a">
-          💳 Pagar / Renovar suscripción
-        </button>
-        <button id="btn-salir-suscripcion" class="btn-secundario" style="width:100%">
-          Cerrar sesión
-        </button>
+        <p class="texto-bloqueo">Para ver y aceptar solicitudes necesitas una suscripción de chofer vigente.</p>
+        <p class="texto-bloqueo">Paga desde aquí, envía tu comprobante y el admin te activará el acceso.</p>
+        <button id="btn-pagar-suscripcion" class="btn-principal" style="background:#16a34a">💳 Pagar / Renovar suscripción</button>
+        <button id="btn-salir-suscripcion" class="btn-secundario" style="width:100%">Cerrar sesión</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PANTALLA: PENDIENTE DE APROBACIÓN
+       ============================================================ -->
+  <section id="pantalla-pendiente-aprobacion" class="pantalla">
+    <div class="contenedor">
+      <h1 class="logo">ALKILO</h1>
+      <div class="bloqueo-suscripcion">
+        <p class="icono-bloqueo">⏳</p>
+        <h2>Cuenta en revisión</h2>
+        <p class="texto-bloqueo">Tu registro como chofer fue recibido. Un administrador revisará tus datos y aprobará tu cuenta.</p>
+        <p class="texto-bloqueo">Esto suele tardar menos de 24 horas. Vuelve más tarde e intenta iniciar sesión.</p>
+        <button id="btn-cerrar-pendiente" class="btn-secundario" style="width:100%">Cerrar sesión</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PANTALLA: CUENTA BLOQUEADA
+       ============================================================ -->
+  <section id="pantalla-cuenta-bloqueada" class="pantalla">
+    <div class="contenedor">
+      <h1 class="logo">ALKILO</h1>
+      <div class="bloqueo-suscripcion">
+        <p class="icono-bloqueo">🚫</p>
+        <h2 id="cuenta-bloqueada-titulo">Cuenta bloqueada</h2>
+        <p class="texto-bloqueo" id="cuenta-bloqueada-motivo">Tu cuenta está suspendida o baneada.</p>
+        <p class="texto-bloqueo">Si crees que es un error, contacta al administrador.</p>
+        <button id="btn-cerrar-bloqueada" class="btn-secundario" style="width:100%">Cerrar sesión</button>
       </div>
     </div>
   </section>
@@ -172,48 +372,26 @@
       <h2>Nuevo pedido</h2>
       <span style="width:60px"></span>
     </header>
-
     <div class="contenedor">
       <form id="form-solicitud" class="formulario">
         <label>Tipo de servicio</label>
         <div class="opciones-tipo">
-          <label class="opcion-tipo">
-            <input type="radio" name="tipo" value="viaje" checked />
-            <span>🚗 Viaje</span>
-          </label>
-          <label class="opcion-tipo">
-            <input type="radio" name="tipo" value="delivery" />
-            <span>📦 Delivery / Recoger</span>
-          </label>
+          <label class="opcion-tipo"><input type="radio" name="tipo" value="viaje" checked /><span>🚗 Viaje</span></label>
+          <label class="opcion-tipo"><input type="radio" name="tipo" value="delivery" /><span>📦 Delivery / Recoger</span></label>
         </div>
-
         <label for="solicitud-origen">Origen (texto)</label>
         <input type="text" id="solicitud-origen" required placeholder="Calle, número, referencia" />
-
-        <p class="texto-ayuda">
-          📍 El chofer te recogerá en tu <strong>ubicación actual en vivo</strong>.
-          Si quieres que vaya a otro lado, escríbelo arriba.
-        </p>
-
+        <p class="texto-ayuda">📍 El chofer te recogerá en tu <strong>ubicación actual en vivo</strong>.</p>
         <label for="solicitud-destino">Destino (texto)</label>
         <input type="text" id="solicitud-destino" required placeholder="A dónde va" />
-
-        <button type="button" id="btn-marcar-recogida" class="btn-accion">
-          📍 Marcar destino exacto en el mapa
-        </button>
-        <p class="texto-ayuda" id="estado-punto-recogida">
-          Sin punto de destino marcado en el mapa. (Opcional)
-        </p>
-
+        <button type="button" id="btn-marcar-recogida" class="btn-accion">📍 Marcar destino exacto en el mapa</button>
+        <p class="texto-ayuda" id="estado-punto-recogida">Sin punto de destino marcado en el mapa. (Opcional)</p>
         <label for="solicitud-notas">Notas (opcional)</label>
         <textarea id="solicitud-notas" rows="3" placeholder="Detalles adicionales"></textarea>
-
         <label for="solicitud-presupuesto">Presupuesto sugerido (opcional)</label>
         <input type="number" id="solicitud-presupuesto" min="0" step="0.01" placeholder="Ej: 5.00" />
-
         <button type="submit" class="btn-principal">Publicar solicitud</button>
       </form>
-
       <p class="mensaje-error" id="solicitud-error"></p>
       <p class="mensaje-exito" id="solicitud-exito"></p>
     </div>
@@ -228,12 +406,7 @@
       <h2>Mis solicitudes</h2>
       <button id="btn-refrescar-mis" class="btn-secundario">↻</button>
     </header>
-
-    <div class="contenedor">
-      <div id="lista-mis-solicitudes" class="lista-solicitudes">
-        <p class="vacio">Cargando...</p>
-      </div>
-    </div>
+    <div class="contenedor"><div id="lista-mis-solicitudes" class="lista-solicitudes"><p class="vacio">Cargando...</p></div></div>
   </section>
 
   <!-- ============================================================
@@ -245,12 +418,7 @@
       <h2>Disponibles</h2>
       <button id="btn-refrescar-disponibles" class="btn-secundario">↻</button>
     </header>
-
-    <div class="contenedor">
-      <div id="lista-disponibles" class="lista-solicitudes">
-        <p class="vacio">Cargando...</p>
-      </div>
-    </div>
+    <div class="contenedor"><div id="lista-disponibles" class="lista-solicitudes"><p class="vacio">Cargando...</p></div></div>
   </section>
 
   <!-- ============================================================
@@ -262,12 +430,7 @@
       <h2>Mis servicios</h2>
       <button id="btn-refrescar-servicios" class="btn-secundario">↻</button>
     </header>
-
-    <div class="contenedor">
-      <div id="lista-mis-servicios" class="lista-solicitudes">
-        <p class="vacio">Cargando...</p>
-      </div>
-    </div>
+    <div class="contenedor"><div id="lista-mis-servicios" class="lista-solicitudes"><p class="vacio">Cargando...</p></div></div>
   </section>
 
   <!-- ============================================================
@@ -279,12 +442,8 @@
       <h2>En vivo</h2>
       <span style="width:60px"></span>
     </header>
-
     <div id="mapa" class="mapa-contenedor"></div>
-
-    <div class="info-mapa">
-      <p id="info-mapa-texto">Esperando ubicación…</p>
-    </div>
+    <div class="info-mapa"><p id="info-mapa-texto">Esperando ubicación…</p></div>
   </section>
 
   <!-- ============================================================
@@ -296,14 +455,10 @@
       <h2>Marcar destino</h2>
       <span style="width:60px"></span>
     </header>
-
     <div id="mapa-recogida" class="mapa-contenedor"></div>
-
     <div class="info-mapa">
       <p id="info-recogida-texto">Toca el mapa para marcar el destino exacto.</p>
-      <button id="btn-confirmar-recogida" class="btn-principal btn-confirmar-recogida" disabled>
-        Confirmar destino
-      </button>
+      <button id="btn-confirmar-recogida" class="btn-principal btn-confirmar-recogida" disabled>Confirmar destino</button>
     </div>
   </section>
 
@@ -316,9 +471,7 @@
       <h2 id="chat-titulo">Chat</h2>
       <span style="width:60px"></span>
     </header>
-
     <div id="chat-mensajes" class="chat-mensajes"></div>
-
     <form id="form-chat" class="chat-form">
       <input type="text" id="chat-input" placeholder="Escribe un mensaje…" autocomplete="off" required />
       <button type="submit" class="btn-enviar">➤</button>
@@ -334,20 +487,15 @@
       <h2>Enviar oferta</h2>
       <span style="width:60px"></span>
     </header>
-
     <div class="contenedor">
       <div id="oferta-resumen" class="resumen-solicitud"></div>
-
       <form id="form-oferta" class="formulario">
         <label for="oferta-monto">Monto propuesto ($)</label>
         <input type="number" id="oferta-monto" min="0" step="0.01" required placeholder="Ej: 8.00" />
-
         <label for="oferta-mensaje">Mensaje (opcional)</label>
         <textarea id="oferta-mensaje" rows="3" placeholder="Ej: Incluye espera de 5 minutos"></textarea>
-
         <button type="submit" class="btn-principal">Enviar oferta</button>
       </form>
-
       <p class="mensaje-error" id="oferta-error"></p>
       <p class="mensaje-exito" id="oferta-exito"></p>
     </div>
@@ -362,12 +510,7 @@
       <h2>Ofertas recibidas</h2>
       <button id="btn-refrescar-ofertas" class="btn-secundario">↻</button>
     </header>
-
-    <div class="contenedor">
-      <div id="lista-ofertas" class="lista-solicitudes">
-        <p class="vacio">Cargando...</p>
-      </div>
-    </div>
+    <div class="contenedor"><div id="lista-ofertas" class="lista-solicitudes"><p class="vacio">Cargando...</p></div></div>
   </section>
 
   <!-- ============================================================
@@ -379,12 +522,9 @@
       <h2>Calificar</h2>
       <span style="width:60px"></span>
     </header>
-
     <div class="contenedor">
       <p id="calificar-titulo" class="subtitulo">¿Cómo estuvo el servicio?</p>
-
       <div id="calificar-destinatario" class="resumen-solicitud"></div>
-
       <div class="estrellas-contenedor" id="estrellas-contenedor">
         <button type="button" class="estrella" data-valor="1">★</button>
         <button type="button" class="estrella" data-valor="2">★</button>
@@ -393,21 +533,18 @@
         <button type="button" class="estrella" data-valor="5">★</button>
       </div>
       <p id="estrellas-texto" class="texto-ayuda">Toca para calificar</p>
-
       <form id="form-calificar" class="formulario">
         <label for="calificar-comentario">Comentario (opcional)</label>
         <textarea id="calificar-comentario" rows="3" placeholder="Cuéntanos tu experiencia"></textarea>
-
         <button type="submit" class="btn-principal">Enviar calificación</button>
       </form>
-
       <p class="mensaje-error" id="calificar-error"></p>
       <p class="mensaje-exito" id="calificar-exito"></p>
     </div>
   </section>
 
   <!-- ============================================================
-       PANTALLA: VER CALIFICACIÓN YA HECHA
+       PANTALLA: VER CALIFICACIÓN
        ============================================================ -->
   <section id="pantalla-ver-calificacion" class="pantalla">
     <header class="barra-superior">
@@ -415,9 +552,209 @@
       <h2>Calificación enviada</h2>
       <span style="width:60px"></span>
     </header>
+    <div class="contenedor"><div id="ver-calificacion-contenido"></div></div>
+  </section>
+
+  <!-- ============================================================
+       PANTALLA: REPORTAR
+       ============================================================ -->
+  <section id="pantalla-reportar" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" id="btn-volver-reportar">← Volver</button>
+      <h2>Reportar</h2>
+      <span style="width:60px"></span>
+    </header>
+    <div class="contenedor">
+      <div id="reportar-destinatario" class="resumen-solicitud"></div>
+      <form id="form-reportar" class="formulario">
+        <label for="reportar-categoria">Motivo del reporte</label>
+        <select id="reportar-categoria" required>
+          <option value="">— Selecciona un motivo —</option>
+          <option value="mal_comportamiento">😠 Mal comportamiento</option>
+          <option value="no_cumplio_servicio">❌ No cumplió el servicio</option>
+          <option value="acoso">🚫 Acoso o amenazas</option>
+          <option value="estafa">💸 Estafa o cobro indebido</option>
+          <option value="otro">❓ Otro motivo</option>
+        </select>
+        <label for="reportar-descripcion">Cuéntanos qué pasó (mínimo 10 caracteres)</label>
+        <textarea id="reportar-descripcion" rows="5" required minlength="10"
+          placeholder="Describe con detalle lo que ocurrió. Sé honesto, el admin revisará tu reporte."></textarea>
+        <p class="texto-ayuda">⚠️ Los reportes falsos pueden resultar en suspensión de tu cuenta.</p>
+        <button type="submit" class="btn-principal">Enviar reporte</button>
+      </form>
+      <p class="mensaje-error" id="reportar-error"></p>
+      <p class="mensaje-exito" id="reportar-exito"></p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PANTALLA: MIS REPORTES
+       ============================================================ -->
+  <section id="pantalla-mis-reportes" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" data-volver="pantalla-perfil">← Volver</button>
+      <h2>Mis reportes</h2>
+      <button id="btn-refrescar-mis-reportes" class="btn-secundario">↻</button>
+    </header>
+    <div class="contenedor">
+      <div class="adm-chips" style="margin-bottom:14px">
+        <button class="chip-filtro activo" data-filtro-reporte="enviados">Enviados por mí</button>
+        <button class="chip-filtro" data-filtro-reporte="recibidos">Recibidos</button>
+      </div>
+      <div id="lista-mis-reportes" class="lista-solicitudes"><p class="vacio">Cargando...</p></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PANTALLA: MIS ADVERTENCIAS
+       ============================================================ -->
+  <section id="pantalla-mis-advertencias" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" data-volver="pantalla-perfil">← Volver</button>
+      <h2>Mis advertencias</h2>
+      <button id="btn-refrescar-advertencias" class="btn-secundario">↻</button>
+    </header>
+    <div class="contenedor"><div id="lista-advertencias" class="lista-solicitudes"><p class="vacio">Cargando...</p></div></div>
+  </section>
+
+  <!-- ============================================================
+       PANTALLA: MIS REFERIDOS
+       ============================================================ -->
+  <section id="pantalla-mis-referidos" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" data-volver="pantalla-perfil">← Volver</button>
+      <h2>Invitar y ganar</h2>
+      <button id="btn-refrescar-referidos" class="btn-secundario">↻</button>
+    </header>
+    <div class="contenedor">
+
+      <div class="ref-hero">
+        <p class="ref-hero-emoji">🎁</p>
+        <h3>Gana saldo invitando amigos</h3>
+        <p class="ref-hero-texto">
+          Comparte tu código. Cuando tu invitado complete su primer servicio, ganan los dos.
+        </p>
+      </div>
+
+      <div class="ref-codigo-card">
+        <p class="ref-codigo-label">Tu código</p>
+        <p class="ref-codigo-valor" id="ref-codigo">—</p>
+        <div class="ref-codigo-acciones">
+          <button id="btn-compartir-referido" class="btn-principal btn-share">📤 Compartir</button>
+          <button id="btn-copiar-referido" class="btn-secundario">📋 Copiar</button>
+        </div>
+      </div>
+
+      <div class="ref-stats">
+        <div class="ref-stat">
+          <span class="ref-stat-valor" id="ref-total-invitados">—</span>
+          <span class="ref-stat-label">Invitados</span>
+        </div>
+        <div class="ref-stat verde">
+          <span class="ref-stat-valor" id="ref-total-ganado">—</span>
+          <span class="ref-stat-label">Ganado</span>
+        </div>
+      </div>
+
+      <h3 class="titulo-seccion">Tus recompensas</h3>
+      <div id="lista-ref-comisiones" class="lista-solicitudes">
+        <p class="vacio">Cargando...</p>
+      </div>
+
+      <div id="ref-aplicar-bloque" class="ref-aplicar-bloque oculto">
+        <h3 class="titulo-seccion">¿Alguien te invitó?</h3>
+        <p class="texto-ayuda" style="text-align:left;margin-bottom:8px">
+          Aplica su código aquí. Solo puedes hacerlo dentro de los primeros 3 días desde tu registro.
+        </p>
+        <div class="ref-aplicar-fila">
+          <input type="text" id="ref-aplicar-input" placeholder="Ej: A1B2-C3D4" maxlength="9"
+                 style="text-transform: uppercase" />
+          <button id="btn-aplicar-referido" class="btn-principal" style="margin-top:0">Aplicar</button>
+        </div>
+        <p class="mensaje-error" id="ref-aplicar-error" style="text-align:left"></p>
+        <p class="mensaje-exito" id="ref-aplicar-exito" style="text-align:left"></p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PANTALLA: PLAN CLIENTE PREMIUM
+       ============================================================ -->
+  <section id="pantalla-plan-premium" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" data-volver="pantalla-perfil">← Volver</button>
+      <h2>Plan Premium</h2>
+      <span style="width:60px"></span>
+    </header>
 
     <div class="contenedor">
-      <div id="ver-calificacion-contenido"></div>
+
+      <div id="premium-estado-card" class="premium-estado-card">
+        <p class="premium-estado-icono">⭐</p>
+        <h3 id="premium-estado-titulo">Hazte Premium</h3>
+        <p id="premium-estado-texto" class="premium-estado-texto">
+          Desbloquea todos los beneficios por $100 al mes.
+        </p>
+      </div>
+
+      <h3 class="titulo-seccion">Beneficios</h3>
+      <ul class="premium-beneficios">
+        <li>
+          <span class="premium-ben-emoji">🗺️</span>
+          <div>
+            <strong>Mapa de choferes cercanos</strong>
+            <span>Ve qué choferes están disponibles en tu zona en tiempo real.</span>
+          </div>
+        </li>
+        <li>
+          <span class="premium-ben-emoji">⭐</span>
+          <div>
+            <strong>Filtro por estrellas</strong>
+            <span>Muestra solo choferes con 4★ o más.</span>
+          </div>
+        </li>
+        <li>
+          <span class="premium-ben-emoji">🔝</span>
+          <div>
+            <strong>Prioridad en tu zona</strong>
+            <span>Tus solicitudes aparecen primero a los choferes de tu municipio y provincia.</span>
+          </div>
+        </li>
+        <li>
+          <span class="premium-ben-emoji">📋</span>
+          <div>
+            <strong>Hasta 3 solicitudes</strong>
+            <span>Pide hasta 3 servicios al mismo tiempo.</span>
+          </div>
+        </li>
+        <li>
+          <span class="premium-ben-emoji">⏱️</span>
+          <div>
+            <strong>30 minutos de espera</strong>
+            <span>Tus solicitudes duran el doble antes de expirar.</span>
+          </div>
+        </li>
+      </ul>
+
+      <div class="premium-saldo-card">
+        <div class="premium-saldo-fila">
+          <span>💰 Tu saldo actual:</span>
+          <strong id="premium-mi-saldo">—</strong>
+        </div>
+        <div class="premium-saldo-fila">
+          <span>💵 Precio del plan:</span>
+          <strong id="premium-precio">$100.00</strong>
+        </div>
+      </div>
+
+      <button id="btn-comprar-premium" class="btn-principal premium-btn-comprar">
+        ⭐ Activar Plan Premium
+      </button>
+
+      <p class="mensaje-error" id="premium-error"></p>
+      <p class="mensaje-exito" id="premium-exito"></p>
+
     </div>
   </section>
 
@@ -430,7 +767,6 @@
       <h2>Panel admin</h2>
       <button id="btn-refrescar-admin" class="btn-secundario">↻</button>
     </header>
-
     <div class="contenedor">
       <div class="grid-metricas" id="admin-metricas">
         <div class="metrica"><span class="metrica-valor" id="m-usuarios">—</span><span class="metrica-label">Usuarios</span></div>
@@ -440,8 +776,8 @@
         <div class="metrica"><span class="metrica-valor" id="m-completados">—</span><span class="metrica-label">Completados</span></div>
         <div class="metrica"><span class="metrica-valor" id="m-ingresos">—</span><span class="metrica-label">Ingresos</span></div>
       </div>
-
       <div class="acciones-perfil" style="margin-top:20px">
+        <button id="btn-abrir-admin-externo" class="btn-accion btn-admin">🚀 Panel avanzado</button>
         <button id="btn-admin-usuarios" class="btn-accion">👥 Gestionar usuarios / choferes</button>
         <button id="btn-admin-pagos" class="btn-accion">💰 Pagos pendientes</button>
         <button id="btn-admin-solicitudes" class="btn-accion">📋 Ver todas las solicitudes</button>
@@ -459,7 +795,6 @@
       <h2>Usuarios</h2>
       <button id="btn-refrescar-admin-usuarios" class="btn-secundario">↻</button>
     </header>
-
     <div class="contenedor">
       <div class="filtros-admin">
         <button class="chip-filtro activo" data-filtro="todos">Todos</button>
@@ -467,10 +802,7 @@
         <button class="chip-filtro" data-filtro="chofer">Choferes</button>
         <button class="chip-filtro" data-filtro="admin">Admins</button>
       </div>
-
-      <div id="lista-admin-usuarios" class="lista-solicitudes">
-        <p class="vacio">Cargando...</p>
-      </div>
+      <div id="lista-admin-usuarios" class="lista-solicitudes"><p class="vacio">Cargando...</p></div>
     </div>
   </section>
 
@@ -483,16 +815,11 @@
       <h2>Solicitudes</h2>
       <button id="btn-refrescar-admin-solicitudes" class="btn-secundario">↻</button>
     </header>
-
-    <div class="contenedor">
-      <div id="lista-admin-solicitudes" class="lista-solicitudes">
-        <p class="vacio">Cargando...</p>
-      </div>
-    </div>
+    <div class="contenedor"><div id="lista-admin-solicitudes" class="lista-solicitudes"><p class="vacio">Cargando...</p></div></div>
   </section>
 
   <!-- ============================================================
-       PANTALLA: ADMIN PRECIOS Y TASAS
+       PANTALLA: ADMIN PRECIOS
        ============================================================ -->
   <section id="pantalla-admin-precio" class="pantalla">
     <header class="barra-superior">
@@ -500,46 +827,30 @@
       <h2>Precios y tasas</h2>
       <span style="width:60px"></span>
     </header>
-
     <div class="contenedor">
-
       <form id="form-admin-precio" class="formulario">
-
         <h3 class="titulo-seccion">Tasa cripto</h3>
-        <p class="texto-ayuda">
-          Cuánto saldo se acredita por cada USDT recibido.
-        </p>
-
+        <p class="texto-ayuda">Cuánto saldo se acredita por cada USDT recibido.</p>
         <label for="admin-tasa-input">1 USDT = ? de saldo</label>
         <input type="number" id="admin-tasa-input" min="0.01" step="0.01" required placeholder="Ej: 300" />
-
         <h3 class="titulo-seccion" style="margin-top:24px">Precios de planes (en saldo)</h3>
-        <p class="texto-ayuda">
-          Estos son los precios que el chofer verá al activar su plan usando saldo interno.
-        </p>
-
         <label for="admin-plan-1">1 mes</label>
         <input type="number" id="admin-plan-1" min="0" step="0.01" required placeholder="Ej: 200" />
-
         <label for="admin-plan-3">3 meses</label>
         <input type="number" id="admin-plan-3" min="0" step="0.01" required placeholder="Ej: 700" />
-
         <label for="admin-plan-6">6 meses</label>
         <input type="number" id="admin-plan-6" min="0" step="0.01" required placeholder="Ej: 1200" />
-
         <label for="admin-plan-12">12 meses</label>
         <input type="number" id="admin-plan-12" min="0" step="0.01" required placeholder="Ej: 2000" />
-
         <button type="submit" class="btn-principal">💾 Guardar todos los cambios</button>
       </form>
-
       <p class="mensaje-exito" id="admin-precio-exito"></p>
       <p class="mensaje-error" id="admin-precio-error"></p>
     </div>
   </section>
 
   <!-- ============================================================
-       PANTALLA: ADMIN - PAGOS PENDIENTES
+       PANTALLA: ADMIN PAGOS
        ============================================================ -->
   <section id="pantalla-admin-pagos" class="pantalla">
     <header class="barra-superior">
@@ -547,7 +858,6 @@
       <h2>Pagos pendientes</h2>
       <button id="btn-refrescar-admin-pagos" class="btn-secundario">↻</button>
     </header>
-
     <div class="contenedor">
       <div class="filtros-admin">
         <button class="chip-filtro-pago activo" data-filtro-pago="pendiente">Pendientes</button>
@@ -555,10 +865,7 @@
         <button class="chip-filtro-pago" data-filtro-pago="rechazada">Rechazadas</button>
         <button class="chip-filtro-pago" data-filtro-pago="todas">Todas</button>
       </div>
-
-      <div id="lista-admin-pagos" class="lista-solicitudes">
-        <p class="vacio">Cargando...</p>
-      </div>
+      <div id="lista-admin-pagos" class="lista-solicitudes"><p class="vacio">Cargando...</p></div>
     </div>
   </section>
 
@@ -571,13 +878,13 @@
       <h2>Perfil</h2>
       <span style="width:60px"></span>
     </header>
-
     <div class="contenedor">
       <div class="perfil-publico-cabecera">
         <img id="pp-foto" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='120' height='120' fill='%23e5e7eb'/><text x='50%25' y='55%25' font-size='60' text-anchor='middle' fill='%239ca3af' font-family='sans-serif'>?</text></svg>" alt="Foto" />
         <h2 id="pp-nombre">—</h2>
         <p id="pp-rol" class="etiqueta-rol">—</p>
-
+        <p id="pp-telefono" class="texto-ayuda">—</p>
+        <p id="pp-ubicacion" class="texto-ayuda">—</p>
         <div class="pp-estrellas">
           <span id="pp-estrellas-visual">★★★★★</span>
           <span id="pp-promedio" class="pp-promedio">0.0</span>
@@ -585,23 +892,404 @@
         <p id="pp-total" class="texto-ayuda">Sin calificaciones aún</p>
         <p id="pp-miembro" class="texto-ayuda"></p>
       </div>
-
+      <div class="acciones-perfil" style="margin-bottom:20px">
+        <button id="btn-reportar-desde-perfil" class="btn-accion">🚨 Reportar a este usuario</button>
+      </div>
       <h3 class="titulo-seccion">Reseñas</h3>
-      <div id="pp-resenas" class="lista-solicitudes">
+      <div id="pp-resenas" class="lista-solicitudes"><p class="vacio">Cargando...</p></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PANTALLA: CHOFERES CERCANOS
+       ============================================================ -->
+  <section id="pantalla-choferes-mapa" class="pantalla pantalla-choperes-mapa">
+    <header class="chm-cabecera">
+      <button class="chm-btn-volver" id="chm-btn-volver">← Volver</button>
+      <h2>Choferes cercanos</h2>
+      <button class="chm-btn-refrescar" id="chm-btn-refrescar">↻</button>
+    </header>
+    <div class="chm-radio-chips" id="chm-radio-chips">
+      <button class="chm-chip" data-radio="5">5 km</button>
+      <button class="chm-chip" data-radio="10">10 km</button>
+      <button class="chm-chip activo" data-radio="25">25 km</button>
+      <button class="chm-chip" data-radio="50">50 km</button>
+      <button class="chm-chip" data-radio="100">100 km</button>
+      <button class="chm-chip" data-radio="0">Todo</button>
+    </div>
+    <div class="chm-aviso" id="chm-aviso">Cargando choferes…</div>
+    <div id="chm-mapa" class="chm-mapa"></div>
+    <div class="chm-overlay" id="chm-overlay">
+      <div class="caja" id="chm-overlay-texto">Cargando...</div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       MÓDULO TERMINAL — PANTALLAS
+       ============================================================ -->
+
+  <section id="pantalla-terminal" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" data-volver="pantalla-perfil">← Volver</button>
+      <h2>🚐 Terminal</h2>
+      <button id="btn-refrescar-terminal" class="btn-secundario">↻</button>
+    </header>
+
+    <div class="contenedor">
+      <div id="terminal-menu-chofer" class="oculto">
+        <div class="term-hero">
+          <p class="term-hero-emoji">🚐</p>
+          <h3>Publica tu viaje interprovincial</h3>
+          <p class="term-hero-texto">
+            Por $50 publicas tu viaje y todos los clientes de tu zona lo ven.
+            Ellos reservan su asiento con $20 y tú cobras el pasaje en efectivo al subir.
+          </p>
+        </div>
+
+        <div id="terminal-sin-viaje" class="term-bloque">
+          <button id="btn-publicar-viaje" class="btn-principal term-btn-principal">
+            ➕ Publicar viaje programado
+          </button>
+          <p class="texto-ayuda" style="margin-top:10px">
+            Costo de publicación: <strong>$50</strong> descontados de tu saldo.
+          </p>
+        </div>
+
+        <div id="terminal-con-viaje" class="oculto">
+          <p class="texto-ayuda" style="text-align:left;margin-bottom:10px">
+            Ya tienes un viaje activo. Gestiónalo desde aquí.
+          </p>
+          <button id="btn-ver-mi-viaje" class="btn-accion">🚌 Ver mi viaje activo</button>
+          <button id="btn-escanear-qr" class="btn-accion">📷 Escanear QR de pasajero</button>
+        </div>
+      </div>
+
+      <div id="terminal-menu-cliente" class="oculto">
+        <div class="term-hero">
+          <p class="term-hero-emoji">🚐</p>
+          <h3>Encuentra tu viaje</h3>
+          <p class="term-hero-texto">
+            Mira los viajes programados por choferes y reserva tu asiento por $20.
+            Pagas el pasaje al chofer en efectivo cuando subas.
+          </p>
+        </div>
+
+        <button id="btn-buscar-viajes" class="btn-accion">🔍 Buscar viajes disponibles</button>
+        <button id="btn-mis-reservas" class="btn-accion">
+          🎫 Mis reservas
+          <span id="badge-mis-reservas" class="badge-rojo oculto">0</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section id="pantalla-terminal-publicar" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" id="btn-volver-terminal-publicar">← Volver</button>
+      <h2>Publicar viaje</h2>
+      <span style="width:60px"></span>
+    </header>
+
+    <div class="contenedor">
+      <form id="form-terminal-publicar" class="formulario">
+
+        <h3 class="titulo-seccion">Origen</h3>
+        <label for="term-origen-provincia">Provincia *</label>
+        <select id="term-origen-provincia" required>
+          <option value="">— Elige provincia —</option>
+        </select>
+
+        <label for="term-origen-municipio">Municipio (opcional)</label>
+        <select id="term-origen-municipio" disabled>
+          <option value="">— Cualquier municipio —</option>
+        </select>
+
+        <h3 class="titulo-seccion" style="margin-top:20px">Destino</h3>
+        <label for="term-destino-provincia">Provincia *</label>
+        <select id="term-destino-provincia" required>
+          <option value="">— Elige provincia —</option>
+        </select>
+
+        <label for="term-destino-municipio">Municipio (opcional)</label>
+        <select id="term-destino-municipio" disabled>
+          <option value="">— Cualquier municipio —</option>
+        </select>
+
+        <h3 class="titulo-seccion" style="margin-top:20px">Punto de encuentro</h3>
+        <button type="button" id="term-btn-marcar-punto" class="btn-accion">
+          📍 Marcar punto en el mapa
+        </button>
+        <p class="texto-ayuda" id="term-estado-punto">
+          Sin punto marcado. Toca el botón de arriba para elegirlo en el mapa.
+        </p>
+
+        <label for="term-punto-texto">Referencia del punto *</label>
+        <input type="text" id="term-punto-texto" required maxlength="80"
+               placeholder="Ej: Esquina Calle Maceo y Frexes" />
+
+        <h3 class="titulo-seccion" style="margin-top:20px">Fecha y hora</h3>
+        <label for="term-fecha">Fecha de salida *</label>
+        <input type="date" id="term-fecha" required />
+
+        <label for="term-hora">Hora de salida * (mínimo 3 horas desde ahora)</label>
+        <input type="time" id="term-hora" required />
+
+        <h3 class="titulo-seccion" style="margin-top:20px">Detalles del viaje</h3>
+        <label for="term-capacidad">Capacidad máxima * (1-50)</label>
+        <input type="number" id="term-capacidad" min="1" max="50" required
+               placeholder="Ej: 20" />
+
+        <label for="term-precio">Precio del pasaje por persona * ($)</label>
+        <input type="number" id="term-precio" min="0" step="0.01" required
+               placeholder="Ej: 500.00" />
+
+        <label for="term-notas">Notas (opcional)</label>
+        <textarea id="term-notas" rows="3" maxlength="300"
+                  placeholder="Ej: Llevo equipaje grande sin costo"></textarea>
+
+        <p class="texto-ayuda" style="margin-top:14px;padding:12px;background:#fef3c7;border-radius:8px;color:#92400e;font-weight:700">
+          ⚠️ Al publicar se te descontarán <strong>$50</strong> de tu saldo.
+        </p>
+
+        <button type="submit" class="btn-principal">🚐 Publicar viaje ($50)</button>
+      </form>
+
+      <p class="mensaje-error" id="term-publicar-error"></p>
+      <p class="mensaje-exito" id="term-publicar-exito"></p>
+    </div>
+  </section>
+
+  <section id="pantalla-terminal-mapa-punto" class="pantalla pantalla-mapa-completa">
+    <header class="barra-superior">
+      <button class="btn-volver" id="btn-cancelar-mapa-punto">← Cancelar</button>
+      <h2>Marcar punto</h2>
+      <span style="width:60px"></span>
+    </header>
+    <div id="mapa-punto-terminal" class="mapa-contenedor"></div>
+    <div class="info-mapa">
+      <p id="info-punto-terminal">Toca el mapa para marcar el punto de encuentro exacto.</p>
+      <button id="btn-confirmar-punto-terminal" class="btn-principal btn-confirmar-recogida" disabled>
+        Confirmar punto
+      </button>
+    </div>
+  </section>
+
+  <section id="pantalla-terminal-mi-viaje" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" data-volver="pantalla-terminal">← Volver</button>
+      <h2>Mi viaje</h2>
+      <button id="btn-refrescar-mi-viaje" class="btn-secundario">↻</button>
+    </header>
+
+    <div class="contenedor">
+      <div id="term-mi-viaje-info" class="term-card-info">
+        <p class="vacio">Cargando...</p>
+      </div>
+
+      <div id="term-mi-viaje-acciones" class="oculto">
+        <button id="btn-term-cerrar-viaje" class="btn-principal term-btn-cerrar">
+          🔒 Cerrar viaje (no más reservas)
+        </button>
+        <button id="btn-term-iniciar-viaje" class="btn-principal term-btn-iniciar oculto">
+          🚗 Iniciar viaje
+        </button>
+        <button id="btn-term-finalizar-viaje" class="btn-principal term-btn-finalizar oculto">
+          🏁 Finalizar viaje
+        </button>
+        <button id="btn-term-cancelar-viaje" class="btn-secundario term-btn-cancelar">
+          ❌ Cancelar viaje
+        </button>
+      </div>
+
+      <h3 class="titulo-seccion">Pasajeros</h3>
+      <div id="term-lista-pasajeros" class="lista-solicitudes">
         <p class="vacio">Cargando...</p>
       </div>
     </div>
   </section>
 
-  <!-- ============================================================
-       PANTALLA: CARGANDO
-       ============================================================ -->
-  <section id="pantalla-cargando" class="pantalla">
-    <div class="contenedor centrado">
-      <p>Cargando...</p>
+  <section id="pantalla-terminal-escanear" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" data-volver="pantalla-terminal">← Volver</button>
+      <h2>Escanear pasaje</h2>
+      <span style="width:60px"></span>
+    </header>
+
+    <div class="contenedor">
+      <p class="texto-ayuda" style="text-align:left;margin-bottom:14px">
+        Apunta la cámara al código QR del pasajero. Funciona incluso sin internet
+        si ya validaste antes en este mismo viaje.
+      </p>
+
+      <div id="term-reader-qr" class="term-reader"></div>
+
+      <button id="btn-term-escanear-manual" class="btn-secundario">
+        🔢 Ingresar código manualmente
+      </button>
+
+      <div id="term-resultado-escaneo" class="oculto"></div>
     </div>
   </section>
 
+  <section id="pantalla-terminal-buscar" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" data-volver="pantalla-terminal">← Volver</button>
+      <h2>Buscar viajes</h2>
+      <button id="btn-refrescar-buscar-viajes" class="btn-secundario">↻</button>
+    </header>
+
+    <div class="contenedor">
+
+      <div class="term-filtros">
+        <label for="term-filtro-origen">Provincia origen (opcional)</label>
+        <select id="term-filtro-origen">
+          <option value="">— Todas —</option>
+        </select>
+
+        <label for="term-filtro-destino">Provincia destino (opcional)</label>
+        <select id="term-filtro-destino">
+          <option value="">— Todas —</option>
+        </select>
+
+        <label for="term-filtro-fecha">Fecha (opcional)</label>
+        <input type="date" id="term-filtro-fecha" />
+
+        <button id="btn-aplicar-filtros-terminal" class="btn-principal">🔍 Aplicar filtros</button>
+      </div>
+
+      <div id="term-lista-viajes" class="lista-solicitudes">
+        <p class="vacio">Cargando...</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="pantalla-terminal-detalle" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" id="btn-volver-detalle-viaje">← Volver</button>
+      <h2>Detalle del viaje</h2>
+      <span style="width:60px"></span>
+    </header>
+
+    <div class="contenedor">
+      <div id="term-detalle-info" class="term-card-info">
+        <p class="vacio">Cargando...</p>
+      </div>
+
+      <div id="term-detalle-mapa-punto" class="term-mini-mapa"></div>
+
+      <button id="btn-term-reservar" class="btn-principal">
+        🎫 Reservar asiento ($20)
+      </button>
+
+      <p class="texto-ayuda" style="margin-top:8px">
+        Puedes añadir hasta 2 familiares más. Cada uno lleva su propio QR.
+      </p>
+
+      <p class="mensaje-error" id="term-detalle-error"></p>
+      <p class="mensaje-exito" id="term-detalle-exito"></p>
+    </div>
+  </section>
+
+  <section id="pantalla-terminal-reservar" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" id="btn-volver-reservar">← Volver</button>
+      <h2>Reservar asiento</h2>
+      <span style="width:60px"></span>
+    </header>
+
+    <div class="contenedor">
+      <div id="term-reservar-resumen" class="resumen-solicitud"></div>
+
+      <form id="form-terminal-reservar" class="formulario">
+        <label class="term-check-familiar">
+          <input type="checkbox" id="term-es-familiar" />
+          <span>Reservar como familiar (hasta 3 asientos)</span>
+        </label>
+
+        <div id="term-pasajeros-bloque">
+          <div class="term-pasajero-row" data-index="0">
+            <label>Pasajero 1 *</label>
+            <input type="text" class="term-pasajero-nombre" data-index="0" required
+                   placeholder="Nombre completo" />
+          </div>
+        </div>
+
+        <button type="button" id="btn-term-añadir-pasajero" class="btn-secundario oculto">
+          ➕ Añadir otro pasajero
+        </button>
+
+        <div class="term-total-card">
+          <div class="premium-saldo-fila">
+            <span>Total a pagar:</span>
+            <strong id="term-total-pagar">$20.00</strong>
+          </div>
+          <div class="premium-saldo-fila">
+            <span>Tu saldo actual:</span>
+            <strong id="term-mi-saldo">—</strong>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-principal">
+          ✅ Confirmar reserva
+        </button>
+      </form>
+
+      <p class="mensaje-error" id="term-reservar-error"></p>
+      <p class="mensaje-exito" id="term-reservar-exito"></p>
+    </div>
+  </section>
+
+  <section id="pantalla-terminal-mis-reservas" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" data-volver="pantalla-terminal">← Volver</button>
+      <h2>Mis reservas</h2>
+      <button id="btn-refrescar-mis-reservas" class="btn-secundario">↻</button>
+    </header>
+
+    <div class="contenedor">
+      <div id="term-lista-mis-reservas" class="lista-solicitudes">
+        <p class="vacio">Cargando...</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="pantalla-terminal-ver-qr" class="pantalla">
+    <header class="barra-superior">
+      <button class="btn-volver" id="btn-volver-ver-qr">← Volver</button>
+      <h2>Tu pasaje</h2>
+      <span style="width:60px"></span>
+    </header>
+
+    <div class="contenedor">
+      <div id="term-qr-info" class="term-card-info">
+        <p class="vacio">Cargando...</p>
+      </div>
+
+      <div class="term-qr-caja">
+        <canvas id="term-qr-canvas"></canvas>
+      </div>
+
+      <p class="texto-ayuda" style="text-align:center;margin-bottom:14px">
+        Muestra este QR al chofer al subir al vehículo.
+      </p>
+
+      <button id="btn-term-descargar-qr" class="btn-principal">
+        💾 Guardar pasaje en el teléfono
+      </button>
+    </div>
+  </section>
+
+  <!-- PANTALLA: CARGANDO -->
+  <section id="pantalla-cargando" class="pantalla">
+    <div class="contenedor centrado"><p>Cargando...</p></div>
+  </section>
+
+  <script src="js/ubicaciones.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/mapa-choferes.js"></script>
+  <script src="js/notificaciones.js"></script>
+  <script src="js/referidos.js"></script>
+  <script src="js/premium.js"></script>
+  <script src="js/terminal.js"></script>
 </body>
 </html>
